@@ -1,0 +1,14 @@
+# EKG-Daten werden beim ersten Lauf von PhysioNet geladen und gehören nicht ins Repository
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Editor und Betriebssystem
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

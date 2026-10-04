@@ -1,0 +1,391 @@
+{
+  "data": {
+    "train_records": 22,
+    "test_records": 22,
+    "train_beats": 50995,
+    "test_beats": 49685,
+    "train_veb": 3788,
+    "test_veb": 3220,
+    "train_hours": 11.03395061728395,
+    "test_hours": 11.03395061728395
+  },
+  "primary_rule": "relativ",
+  "rules": {
+    "relativ": {
+      "params": {
+        "variant": "relativ",
+        "feature": "qrs_width_rel",
+        "premature": 0.92,
+        "wide": 1.15,
+        "very_wide": 1.8,
+        "f1_train": 0.8166110062436475
+      },
+      "train": {
+        "tp": 2812,
+        "fp": 287,
+        "fn": 976,
+        "tn": 46920,
+        "sensitivity": 0.7423442449841605,
+        "ppv": 0.9073894804775734,
+        "fpr": 0.0060796068379689455,
+        "false_alarms_per_hour": 26.010629370629374
+      },
+      "test": {
+        "tp": 2746,
+        "fp": 250,
+        "fn": 474,
+        "tn": 46215,
+        "sensitivity": 0.8527950310559006,
+        "ppv": 0.9165554072096128,
+        "fpr": 0.0053803938448294415,
+        "false_alarms_per_hour": 22.65734265734266
+      },
+      "model_iso": {
+        "tp": 2746,
+        "fp": 31,
+        "fn": 474,
+        "tn": 46434,
+        "sensitivity": 0.8527950310559006,
+        "ppv": 0.9888368743248109,
+        "fpr": 0.0006671688367588508,
+        "false_alarms_per_hour": 2.80951048951049
+      },
+      "iso_threshold": 0.6186043916659635,
+      "false_alarm_reduction_iso": 0.876
+    },
+    "absolut": {
+      "params": {
+        "variant": "absolut",
+        "feature": "qrs_width_ms",
+        "premature": 0.88,
+        "wide": 40.0,
+        "very_wide": 80.0,
+        "f1_train": 0.7858361774744027
+      },
+      "train": {
+        "tp": 2763,
+        "fp": 481,
+        "fn": 1025,
+        "tn": 46726,
+        "sensitivity": 0.7294086589229145,
+        "ppv": 0.8517262638717632,
+        "fpr": 0.010189166860846909,
+        "false_alarms_per_hour": 43.59272727272728
+      },
+      "test": {
+        "tp": 2573,
+        "fp": 30,
+        "fn": 647,
+        "tn": 46435,
+        "sensitivity": 0.7990683229813664,
+        "ppv": 0.9884748367268537,
+        "fpr": 0.000645647261379533,
+        "false_alarms_per_hour": 2.7188811188811193
+      },
+      "model_iso": {
+        "tp": 2573,
+        "fp": 8,
+        "fn": 647,
+        "tn": 46457,
+        "sensitivity": 0.7990683229813664,
+        "ppv": 0.9969004261913987,
+        "fpr": 0.00017217260303454212,
+        "false_alarms_per_hour": 0.7250349650349651
+      },
+      "iso_threshold": 0.6970913590808858,
+      "false_alarm_reduction_iso": 0.7333333333333334
+    }
+  },
+  "model": {
+    "type": "RandomForestClassifier",
+    "n_features": 34,
+    "threshold": 0.5,
+    "test": {
+      "tp": 2926,
+      "fp": 79,
+      "fn": 294,
+      "tn": 46386,
+      "sensitivity": 0.908695652173913,
+      "ppv": 0.9737104825291182,
+      "fpr": 0.0017002044549661035,
+      "false_alarms_per_hour": 7.159720279720281
+    },
+    "false_alarm_reduction_vs_primary_rule": 0.6839999999999999,
+    "top_features": [
+      {
+        "feature": "rr_ratio_pre",
+        "importance": 0.1491395415467875
+      },
+      {
+        "feature": "rr_ratio_post",
+        "importance": 0.13043236800172486
+      },
+      {
+        "feature": "qrs_width_rel",
+        "importance": 0.11882792791044908
+      },
+      {
+        "feature": "qrs_width_ms",
+        "importance": 0.09099762689980727
+      },
+      {
+        "feature": "rr_pre",
+        "importance": 0.07979924596581324
+      },
+      {
+        "feature": "m07",
+        "importance": 0.05221692315771715
+      },
+      {
+        "feature": "m10",
+        "importance": 0.0485103152978775
+      },
+      {
+        "feature": "m11",
+        "importance": 0.03491793640687887
+      }
+    ]
+  },
+  "errors_test": {
+    "fp_by_class": {
+      "rule": {
+        "N": 131,
+        "S": 58,
+        "F": 61
+      },
+      "model": {
+        "N": 28,
+        "S": 28,
+        "F": 23
+      }
+    },
+    "per_record": [
+      {
+        "record": 100,
+        "veb": 1,
+        "fp_rule": 1,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 103,
+        "veb": 0,
+        "fp_rule": 1,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 105,
+        "veb": 41,
+        "fp_rule": 27,
+        "fp_model": 18,
+        "fn_rule": 30,
+        "fn_model": 28
+      },
+      {
+        "record": 111,
+        "veb": 1,
+        "fp_rule": 24,
+        "fp_model": 2,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 113,
+        "veb": 0,
+        "fp_rule": 0,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 117,
+        "veb": 0,
+        "fp_rule": 0,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 121,
+        "veb": 1,
+        "fp_rule": 1,
+        "fp_model": 1,
+        "fn_rule": 1,
+        "fn_model": 0
+      },
+      {
+        "record": 123,
+        "veb": 3,
+        "fp_rule": 0,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 200,
+        "veb": 826,
+        "fp_rule": 2,
+        "fp_model": 0,
+        "fn_rule": 159,
+        "fn_model": 45
+      },
+      {
+        "record": 202,
+        "veb": 19,
+        "fp_rule": 11,
+        "fp_model": 4,
+        "fn_rule": 13,
+        "fn_model": 1
+      },
+      {
+        "record": 210,
+        "veb": 195,
+        "fp_rule": 13,
+        "fp_model": 2,
+        "fn_rule": 56,
+        "fn_model": 35
+      },
+      {
+        "record": 212,
+        "veb": 0,
+        "fp_rule": 0,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 213,
+        "veb": 220,
+        "fp_rule": 60,
+        "fp_model": 21,
+        "fn_rule": 7,
+        "fn_model": 30
+      },
+      {
+        "record": 214,
+        "veb": 256,
+        "fp_rule": 5,
+        "fp_model": 1,
+        "fn_rule": 132,
+        "fn_model": 67
+      },
+      {
+        "record": 219,
+        "veb": 64,
+        "fp_rule": 13,
+        "fp_model": 0,
+        "fn_rule": 6,
+        "fn_model": 8
+      },
+      {
+        "record": 221,
+        "veb": 396,
+        "fp_rule": 1,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 1
+      },
+      {
+        "record": 222,
+        "veb": 0,
+        "fp_rule": 82,
+        "fp_model": 17,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 228,
+        "veb": 362,
+        "fp_rule": 5,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 231,
+        "veb": 2,
+        "fp_rule": 0,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 1
+      },
+      {
+        "record": 232,
+        "veb": 0,
+        "fp_rule": 2,
+        "fp_model": 9,
+        "fn_rule": 0,
+        "fn_model": 0
+      },
+      {
+        "record": 233,
+        "veb": 830,
+        "fp_rule": 2,
+        "fp_model": 4,
+        "fn_rule": 70,
+        "fn_model": 78
+      },
+      {
+        "record": 234,
+        "veb": 3,
+        "fp_rule": 0,
+        "fp_model": 0,
+        "fn_rule": 0,
+        "fn_model": 0
+      }
+    ]
+  },
+  "qrs": {
+    "records": 44,
+    "tp": 99507,
+    "fp": 1896,
+    "fn": 1226,
+    "sensitivity": 0.9878292118769421,
+    "ppv": 0.9813023283334813,
+    "worst": [
+      {
+        "record": 113,
+        "tp": 1794,
+        "fp": 1039,
+        "fn": 1,
+        "sensitivity": 0.9994428969359331,
+        "ppv": 0.6332509707024356
+      },
+      {
+        "record": 207,
+        "tp": 1340,
+        "fp": 47,
+        "fn": 520,
+        "sensitivity": 0.7204301075268817,
+        "ppv": 0.966113914924297
+      },
+      {
+        "record": 108,
+        "tp": 1563,
+        "fp": 181,
+        "fn": 200,
+        "sensitivity": 0.8865570051049347,
+        "ppv": 0.8962155963302753
+      },
+      {
+        "record": 231,
+        "tp": 1571,
+        "fp": 410,
+        "fn": 0,
+        "sensitivity": 1.0,
+        "ppv": 0.7930338213023725
+      },
+      {
+        "record": 203,
+        "tp": 2739,
+        "fp": 30,
+        "fn": 241,
+        "sensitivity": 0.9191275167785234,
+        "ppv": 0.9891657638136512
+      }
+    ]
+  }
+}
