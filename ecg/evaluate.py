@@ -51,3 +51,14 @@ def match_peaks(reference: np.ndarray, detected: np.ndarray, tolerance: int) -> 
         else:
             i += 1          # Referenzschlag wurde verpasst
     return tp, len(detected) - tp, len(reference) - tp
+
+
+def best_f1_threshold(scores: np.ndarray, y_true: np.ndarray) -> float:
+    """Schwelle mit dem höchsten F1-Wert auf einer Validierungsmenge (nie auf der Testmenge wählen)."""
+    scores, y_true = np.asarray(scores), np.asarray(y_true, bool)
+    order = np.argsort(-scores)
+    tp = np.cumsum(y_true[order])
+    fp = np.cumsum(~y_true[order])
+    f1 = 2 * tp / (tp + fp + y_true.sum())
+    k = int(np.argmax(f1))
+    return float(scores[order][k])

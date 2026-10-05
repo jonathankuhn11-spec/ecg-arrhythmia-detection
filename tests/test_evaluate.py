@@ -1,6 +1,6 @@
 import numpy as np
 
-from ecg.evaluate import binary_metrics, match_peaks, threshold_for_sensitivity
+from ecg.evaluate import best_f1_threshold, binary_metrics, match_peaks, threshold_for_sensitivity
 
 
 def test_binary_metrics_counts_and_rates():
@@ -37,3 +37,11 @@ def test_threshold_for_sensitivity_hits_requested_number_of_true_positives():
     threshold = threshold_for_sensitivity(scores, y_true, target_tp=2)
     assert threshold == 0.7
     assert np.sum((scores >= threshold) & y_true) == 2
+
+
+def test_best_f1_threshold_separates_clean_scores():
+    scores = np.array([0.9, 0.8, 0.3, 0.2, 0.1, 0.05])
+    y_true = np.array([1, 1, 0, 0, 0, 0], bool)
+    thr = best_f1_threshold(scores, y_true)
+    assert 0.3 < thr <= 0.8
+    assert np.array_equal(scores >= thr, y_true)

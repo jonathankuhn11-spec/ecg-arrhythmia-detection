@@ -3,10 +3,11 @@
 ![Tests](https://github.com/jonathankuhn11-spec/ecg-arrhythmia-detection/actions/workflows/tests.yml/badge.svg)
 
 Signalverarbeitungs- und Klassifikationspipeline, die ventrikuläre Extrasystolen (VEB) im EKG erkennt.
-Sie vergleicht ein transparentes Regelwerk mit einem gelernten Modell und beantwortet eine Frage:
-Wie viele Fehlalarme lassen sich vermeiden, ohne echte Ereignisse zu verpassen?
+Sie vergleicht ein transparentes Regelwerk, ein Modell auf handgemachten Merkmalen (Random Forest) und ein
+1D-CNN auf den rohen Schlagfenstern (Deep Learning) und beantwortet eine Frage: Wie viele Fehlalarme lassen
+sich vermeiden, ohne echte Ereignisse zu verpassen?
 
-**Stack:** Python, WFDB, SciPy, NeuroKit2, scikit-learn · **Daten:** MIT-BIH Arrhythmia Database (PhysioNet) · **Status:** Baseline, laufendes Projekt
+**Stack:** Python, WFDB, SciPy, NeuroKit2, scikit-learn, JAX · **Daten:** MIT-BIH Arrhythmia Database (PhysioNet) · **Status:** Benchmark auf Inter-Patienten-Split, laufendes Projekt
 
 ## Ergebnis
 
@@ -16,10 +17,14 @@ Regelwerk und Modell wurden ausschließlich auf den 22 Records der Trainingsmeng
 | Detektor | Sensitivität | pos. Prädiktivität | Fehlalarme pro Stunde | verpasste VEB |
 | --- | --- | --- | --- | --- |
 | Regelwerk (vorzeitig und verbreitert) | 85,3 % | 91,7 % | 22,7 | 474 |
-| Random Forest, Schwelle 0,5 | 90,9 % | 97,4 % | 7,2 | 294 |
+| Random Forest auf 34 Merkmalen, Schwelle 0,5 | 90,9 % | 97,4 % | 7,2 | 294 |
+| 1D-CNN auf Rohfenstern, Schwelle aus Validierung, Mittel aus 3 Startwerten | 96,6 % | 51,2 % | 269 | 110 |
 
-Das Modell erkennt mehr VEB und meldet dabei 68 % weniger Fehlalarme (79 statt 250).
+Das Modell erkennt mehr VEB als das Regelwerk und meldet dabei 68 % weniger Fehlalarme (79 statt 250).
 Stellt man es auf dieselbe Sensitivität wie das Regelwerk ein, bleiben 31 Fehlalarme (minus 88 %).
+Das CNN findet fast alle VEB, aber jede zweite Meldung ist falsch; schwellenfrei verglichen liegt seine
+Average Precision bei 0,874 gegenüber 0,980 beim Random Forest, und bei dessen Sensitivität erreicht es
+63,9 % positive Prädiktivität. Warum das so ist, steht unter [Deep Learning](#deep-learning-1d-cnn-gegen-merkmale).
 
 ![Precision-Recall-Kurve](results/figures/veb_precision_recall.png)
 
@@ -117,6 +122,34 @@ gemeinsam mit der Schlagform gewichtet, statt drei feste Schwellen zu verknüpfe
 positiver Prädiktivität. Die Schwächen sind wieder patientenspezifisch: In Record 113 gibt es 1.039
 Fehldetektionen (positive Prädiktivität 63,3 %), in Record 207 werden 28 % der Schläge verpasst.
 
+## Deep Learning: 1D-CNN gegen Merkmale
+
+![Precision-Recall: Random Forest gegen CNN](results/figures/cnn_vs_rf_pr.png)
+
+`ecg/cnn.py` trainiert ein kleines Faltungsnetz (7.089 Parameter, JAX, nur CPU) direkt auf den
+Schlagfenstern: Kanal 1 ist der bandpassgefilterte Schlag von 250 ms vor bis 400 ms nach der R-Zacke, Kanal 2
+die Abweichung dieses Schlags vom Median der 30 vorangegangenen Schläge desselben Patienten, dazu die zwei
+Rhythmusmerkmale. Training nur auf DS1 mit Klassengewichtung, Epochenwahl und Entscheidungsschwelle auf fünf
+abgetrennten DS1-Patienten (nie auf DS2), drei Startwerte, zwei Minuten je Training.
+
+Das Ergebnis ist eindeutig und lehrreich: Das CNN ist dem Random Forest unterlegen, nicht knapp, sondern bei
+jeder Schwelle (Abbildung). Zwei Patienten der Testmenge erklären den Großteil seiner Fehlalarme: Record 117
+(1.127 falsch gemeldete normale Schläge, der Patient hat keine einzige VEB) und Record 111 (748 Schläge mit
+Linksschenkelblock). Beide haben eine Normalmorphologie, die dem Netz aus dem Training als „ventrikulär"
+vorkommt. Der Random Forest meldet in diesen beiden Records zusammen 2 Fehlalarme, weil seine Merkmale relativ
+zum Patienten sind: QRS-Breite im Verhältnis zu den letzten 30 Schlägen, Amplitude relativ zur eigenen
+Referenz. Der Vorlagenkanal des CNN gibt ihm dieselbe Information, hebt die Präzision von 40 auf 51 %, mehr
+nicht. Was der Random Forest zusätzlich kann: Die Schwelle 0,5 bedeutet bei ihm für jeden Patienten
+dasselbe, beim CNN wandert die Score-Verteilung von Patient zu Patient, sodass die auf DS1 gewählte Schwelle
+auf DS2 nicht passt.
+
+Das ist der Befund, der in der Literatur zum Inter-Patienten-Split immer wieder auftaucht: Ohne
+patientenrelative Normierung generalisiert Deep Learning auf 22 Trainingspatienten schlechter als
+Feature-Engineering mit Domänenwissen. Ein größeres Netz, mehr Epochen oder Augmentierung würden den
+Trainingsverlust senken, aber nicht das Problem lösen, dass die Testpatienten anders aussehen als die
+Trainingspatienten. Die Trainingskurven in [`results/figures/cnn_training.png`](results/figures/cnn_training.png)
+zeigen genau das: Der Validierungsverlust steigt ab Epoche 4 bis 6, während der Trainingsverlust weiter fällt.
+
 **Einordnung.** De Chazal et al. (2004) berichten auf derselben Aufteilung für VEB eine Sensitivität von
 77,7 % bei 81,9 % positiver Prädiktivität. Der Vergleich ist nur grob: Dort wurde ein Fünf-Klassen-Problem
 mit linearer Diskriminanzanalyse gelöst, hier eine Ja/Nein-Frage.
@@ -141,6 +174,12 @@ macOS und Linux: statt der vierten Zeile `source .venv/bin/activate`.
 Weitere Läufe starten mit `python run_pipeline.py`. Zufallsstartwert und Paketversionen sind fixiert.
 Auf anderen Betriebssystemen können einzelne Zähler durch Rundungsunterschiede um wenige Schläge abweichen.
 
+Deep-Learning-Vergleich (nach dem ersten Lauf, rund 8 Minuten auf einer CPU):
+
+```powershell
+python run_cnn.py
+```
+
 Tests laufen ohne Download auf synthetischen Signalen:
 
 ```powershell
@@ -159,12 +198,14 @@ ecg/
   data.py        Download und Laden über WFDB
   features.py    Bandpass, RR-Intervalle, QRS-Breite, Morphologie
   detectors.py   Regelwerk mit Kalibrierung, Random Forest
-  evaluate.py    Kennzahlen, Abgleich detektierter R-Zacken
+  evaluate.py    Kennzahlen, Abgleich detektierter R-Zacken, Schwellenwahl auf Validierung
   qrs.py         R-Zacken-Detektion mit NeuroKit2
+  cnn.py         1D-CNN in JAX: Schlagfenster mit Vorlagenkanal, Training, Vorhersage
   report.py      Abbildungen und Markdown-Bericht
 run_pipeline.py  kompletter Lauf von den Rohdaten bis zum Bericht
-tests/           19 Tests auf synthetischen Signalen
-results/         Kennzahlen, Bericht und Abbildungen des letzten Laufs
+run_cnn.py       Deep-Learning-Vergleich: Training, schwellenfreie Metriken, Score-Export
+tests/           25 Tests auf synthetischen Signalen
+results/         Kennzahlen, Bericht und Abbildungen des letzten Laufs; cnn.json und cnn_scores.npz
 ```
 
 ## Grenzen
@@ -178,7 +219,10 @@ results/         Kennzahlen, Bericht und Abbildungen des letzten Laufs
 - **Ein Patient in beiden Mengen.** Die Records 201 (DS1) und 202 (DS2) stammen von derselben Person.
   Das ist eine bekannte Eigenschaft der Standardaufteilung.
 - **Vergleich bei gleicher Sensitivität.** Die Modellschwelle dafür wurde auf DS2 abgelesen. Sie beschreibt
-  die Trennschärfe und ist kein vorab festgelegter Betriebspunkt.
+  die Trennschärfe und ist kein vorab festgelegter Betriebspunkt. Die CNN-Schwelle dagegen stammt aus der
+  Validierung auf DS1; auf DS2 abgelesen wäre sie schöner, aber nicht ehrlich.
+- **Kleines Netz, kurzes Training.** Das CNN ist bewusst klein, damit es auf einer CPU in zwei Minuten
+  trainiert. Es belegt den Inter-Patienten-Effekt, nicht die Obergrenze dessen, was Deep Learning kann.
 - **Nicht in Echtzeit.** Die Normierung der Schlagform nutzt die mittlere Amplitude des ganzen Records,
   und jeder Schlag wartet auf seinen Nachfolger.
 - **Eine Ableitung.** Verwendet wird nur MLII.
@@ -187,7 +231,8 @@ results/         Kennzahlen, Bericht und Abbildungen des letzten Laufs
 ## Nächste Schritte
 
 1. End-to-End-Lauf mit detektierten statt annotierten R-Zacken
-2. Deep-Learning-Vergleich: 1D-CNN auf denselben Schlagfenstern und derselben Aufteilung
+2. CNN mit patientenweiser Normierung der Scores (z. B. Schwelle je Patient aus dessen ersten Minuten) und
+   Vergleich mit einem Hybrid: CNN-Einbettung plus relative Merkmale im Random Forest
 3. Konfidenzintervalle über Records (Bootstrap) und patientenweise Kreuzvalidierung auf DS1
 4. Übertrag auf die Alarmebene mit CinC 2015 und VTaC
 5. Eigene Aufnahmen mit einem AD8232-Sensoraufbau durch dieselbe Vorverarbeitung und Detektion schicken
