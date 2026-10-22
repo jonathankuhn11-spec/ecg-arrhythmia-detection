@@ -2,10 +2,9 @@
 
 ![Tests](https://github.com/jonathankuhn11-spec/ecg-arrhythmia-detection/actions/workflows/tests.yml/badge.svg)
 
-How many false alarms can a heartbeat detector avoid without missing real events? This repo answers that
-for ventricular ectopic beats (VEB) on the MIT-BIH Arrhythmia Database, comparing three detectors on a
-strict inter-patient split: a transparent rule set, a random forest on 34 hand-built features, and a small
-1D CNN on raw beat windows.
+Detection of ventricular ectopic beats (VEB) on the MIT-BIH Arrhythmia Database. Three detectors are
+compared on an inter-patient split: a rule set, a random forest on 34 hand-built features and a small 1D CNN
+on raw beat windows. The metric I care about is false alarms per hour at a given sensitivity.
 
 ## Result
 
@@ -21,11 +20,11 @@ fit on the 22 training patients (DS1) only.
 The random forest catches more VEB than the rules and raises 68 % fewer false alarms (79 instead of 250).
 Tuned to the rules' sensitivity, it drops to 31 false alarms.
 
-The CNN finds almost every VEB, but every second alarm is wrong. That is the interesting part.
+The CNN finds almost every VEB, but every second alarm is wrong.
 
 ![Precision-recall curve](results/figures/veb_precision_recall.png)
 
-## Why the CNN loses
+## CNN vs. random forest
 
 Two test patients cause most of its false alarms: record 117 (1,127 normal beats flagged, the patient has
 no VEB at all) and record 111 (748 beats with left bundle branch block). Their normal beats look
@@ -36,33 +35,32 @@ against the patient's own reference.
 Giving the CNN a second channel with the deviation from the patient's median beat lifts precision from 40 %
 to 51 %, no further. Its score distribution also shifts from patient to patient, so a threshold chosen on
 DS1 does not hold on DS2. Validation loss rises from epoch 4 to 6 while training loss keeps falling. A
-bigger network would fit the training patients better and still not generalise to new ones. This matches
-what the inter-patient literature keeps finding: with 22 training patients, domain features beat end-to-end
-learning unless the model is normalised per patient.
+bigger network would fit the training patients better but would not fix the shift between patients. The
+inter-patient literature reports the same: with 22 training patients, patient-relative features do better
+than end-to-end learning without per-patient normalisation.
 
-## Why this matters
+## Background
 
 ICU monitors raise a lot of false alarms. Drew et al. (2014) reviewed 12,671 arrhythmia alarms from five
-ICUs and found 88.8 % of them false, wide QRS complexes from bundle branch block among the causes. Staff
-who hear constant false alarms react slower to real ones. Record 111 shows the same effect at small scale:
-a wide QRS alone is not a reliable criterion.
+ICUs and found 88.8 % of them false, wide QRS complexes from bundle branch block among the causes. Record 111 shows the same
+problem here: a wide QRS alone is not a reliable criterion.
 
 This repo works one level below the alarm, on single beats. Ventricular tachycardia is a run of ventricular
 beats, so a beat detector with few false positives is the building block for any alarm logic above it.
 
 ## Method
 
-- **Data:** 48 half-hour two-lead recordings at 360 Hz, every beat annotated by at least two cardiologists.
+- Data: 48 half-hour two-lead recordings at 360 Hz, every beat annotated by at least two cardiologists.
   Lead MLII only.
-- **Split:** DS1/DS2 after de Chazal et al. (2004), no patient in both sets. A random split of beats would
+- Split: DS1/DS2 after de Chazal et al. (2004), no patient in both sets. A random split of beats would
   let the model memorise patients and inflate every number. The four paced records are excluded (AAMI).
-- **Features:** RR intervals before and after the beat, also relative to the local rhythm; QRS width
+- Features: RR intervals before and after the beat, also relative to the local rhythm; QRS width
   absolute and relative to the last 30 beats; beat shape from 250 ms before to 400 ms after the R peak as
   26 averages.
-- **Models:** rule thresholds from a grid search on DS1; random forest with 200 trees, class-weighted, no
+- Models: rule thresholds from a grid search on DS1; random forest with 200 trees, class-weighted, no
   tuning; CNN with 7,089 parameters in JAX, CPU only, epoch and threshold chosen on five held-out DS1
   patients.
-- **QRS detection** is checked separately: NeuroKit2 finds 98.8 % of beats at 98.1 % positive
+- QRS detection is checked separately: NeuroKit2 finds 98.8 % of beats at 98.1 % positive
   predictivity across all 44 records, with clear patient-specific failures (record 113, record 207).
 
 ## Run it
